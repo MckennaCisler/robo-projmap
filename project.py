@@ -6,10 +6,14 @@ if sys.version_info[0] == 2:  # Just checking your Python version to import Tkin
 else:
     from tkinter import *
 
+PROJECTOR_RES_W = 1366
+PROJECTOR_RES_H = 768
+
 class Fullscreen_Window:
     def __init__(self):
         self.tk = Tk()
-        self.tk.geometry('1366x768+%d+%d' % (1920, 0))
+        screen_w = self.tk.winfo_screenwidth() - PROJECTOR_RES_W
+        self.tk.geometry('%dx%d+%d+%d' % (PROJECTOR_RES_W, PROJECTOR_RES_H, screen_w, 0))
         self.frame = Canvas(self.tk)
         self.frame.configure(background='black', highlightthickness=0)
         self.frame.pack(fill='both', expand=True)
@@ -43,27 +47,27 @@ class Fullscreen_Window:
     def get_dims(self):
         return self.frame.winfo_height(), self.frame.winfo_width()
 
-# if __name__ == '__main__':
-#     w = Fullscreen_Window()
-#     w.tk.update_idletasks()
-#     w.tk.update()
-#     sleep(1)
-#
-#     height, width = w.frame.winfo_height(), w.frame.winfo_width()
-#     print(width, height)
-#     for ittr in range(1):
-#         for x in range(1, 16):
-#             w.frame.delete("all")
-#             w.frame.create_line(width * x / 16, 0, width * x / 16, height, fill='white', width=3)
-#             w.tk.update_idletasks()
-#             w.tk.update()
-#             sleep(.55)
-#
-#         for y in range(1, 9):
-#             w.frame.delete("all")
-#             w.frame.create_line(0, height * y / 9, width, height * y / 9, fill='white', width)
-#             w.tk.update_idletasks()
-#             w.tk.update()
-#             sleep(.55)
-#
-#     sleep(2)
+if __name__ == '__main__':
+    w = Fullscreen_Window()
+    w.tk.update_idletasks()
+    w.tk.update()
+    sleep(1)
+
+    height, width = w.frame.winfo_height(), w.frame.winfo_width()
+    print(width, height)
+    for ittr in range(1):
+        for x in range(1, 16):
+            w.frame.delete("all")
+            w.frame.create_line(width * x / 16, 0, width * x / 16, height, fill='white', width=3)
+            w.tk.update_idletasks()
+            w.tk.update()
+            sleep(.55)
+
+        for y in range(1, 9):
+            w.frame.delete("all")
+            w.frame.create_line(0, height * y / 9, width, height * y / 9, fill='white', width=3)
+            w.tk.update_idletasks()
+            w.tk.update()
+            sleep(.55)
+
+    sleep(2)
