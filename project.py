@@ -32,8 +32,9 @@ class Fullscreen_Window:
         self.tk.update_idletasks()
         self.tk.update()
 
-    def draw_line(p1, p2, **kwargs):
+    def draw_line(self, p1, p2, **kwargs):
         self.frame.create_line(p1[0], p1[1], p2[0], p2[1], **kwargs)
+        self.update()
 
     def clear(self):
         self.frame.delete('all')
