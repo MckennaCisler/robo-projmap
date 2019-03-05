@@ -1,7 +1,4 @@
 from freenect2 import Device, FrameType
-import numpy as np
-%matplotlib inline
-import matplotlib.pyplot as plt
 
 print('Opening Kinect via USB')
 device = Device()
