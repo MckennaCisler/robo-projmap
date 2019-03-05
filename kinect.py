@@ -8,11 +8,11 @@ def get_color_frame():
         for type_, frame1 in device:
             if type_ is FrameType.Color:
                 break
-    return frame1.to_array().copy()
+    return frame1.to_array().copy()[:, ::-1]
 
 def get_depth_frame():
     with device.running():
         for type_, frame1 in device:
             if type_ is FrameType.Depth:
                 break
-    return frame1.to_array().copy()
+    return frame1.to_array().copy()[:, ::-1]
