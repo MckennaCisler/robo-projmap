@@ -7,7 +7,7 @@ from os.path import join
 import matplotlib.pyplot as plt
 import calibration
 
-NUM_IMAGES = 20
+NUM_IMAGES = 40
 IMAGE_DIR = "calibration_images/"
 GRID_X_NUM = 7
 GRID_Y_NUM = 5
