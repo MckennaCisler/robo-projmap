@@ -6,6 +6,7 @@ np.set_printoptions(suppress=True, precision=4)
 import itertools
 import matplotlib.pyplot as plt
 import sys
+import json
 
 def read_projector_calibration_images(directory):
     base_im = cv2.imread(join(directory, 'base.png'), cv2.IMREAD_GRAYSCALE)
@@ -23,7 +24,7 @@ def find_line(base_im, im, threshhold=0.1, dist=12):
 
     r, t = find_line_binary_image(im - base_im > threshhold)
     wt = np.maximum(im - base_im, 0)
-    
+
     rs = np.sum(np.indices(wt.shape) * np.array([[[np.sin(t)]], [[np.cos(t)]]]), 0)
     wt[np.abs(rs - r) > dist] = 0
     wt -= 0.05
@@ -50,9 +51,6 @@ def find_line(base_im, im, threshhold=0.1, dist=12):
 
     return rho, theta
 
-    
-
-
 def find_line_binary_image(im):
     rho, theta = cv2.HoughLines(im.astype(np.uint8), 1, np.pi / 180, 100, lines=1)[0, 0]
     return rho, theta
@@ -67,30 +65,32 @@ def find_line_intersection(line1_rt, line2_rt):
     arr_inv = np.linalg.inv(arr)
     return np.matmul(arr_inv, np.array([r1, r2]))
 
+def get_intersection_points(proj_im_dir, camera_calibration_file, shape=(15, 8)):
+    loads = json.load(open(camera_calibration_file, 'r'))
+    intr, dist, rvecs, tvecs = [np.array(load) for load in loads]
 
-parser = argparse.ArgumentParser(description='convert the line crossings in projector space to points in world space on the image plane.')
-parser.add_argument('--cam-cal', dest='camera_calibration_file', type=str)
-parser.add_argument('--proj-cal-dir', dest='proj_im_dir', type=str, required=True)
-args = parser.parse_args()
+    base_im, x_ims, y_ims = read_projector_calibration_images(proj_im_dir)
 
+    h,  w = base_im.shape[:2]
+    newcameramtx, roi=cv2.getOptimalNewCameraMatrix(intr,dist,(w,h),1,(w,h))
 
-proj_im_dir = args.proj_im_dir
-camera_calibration_file = args.camera_calibration_file
+    base_im = cv2.undistort(base_im, intr, dist, None, newcameramtx)
+    x_ims = [cv2.undistort(im, intr, dist, None, newcameramtx) for im in x_ims]
+    y_ims = [cv2.undistort(im, intr, dist, None, newcameramtx) for im in y_ims]
 
-camera_calibration = None # TODO read calibration data from file
+    plt.imshow(x_ims[4])
 
-base_im, x_ims, y_ims = read_projector_calibration_images(proj_im_dir)
+    x_lines = [find_line(base_im, im) for im in x_ims]
+    y_lines = [find_line(base_im, im) for im in y_ims]
 
-x_lines = [find_line(base_im, im) for im in x_ims]
-y_lines = [find_line(base_im, im) for im in y_ims]
+    points = np.zeros([shape[0], shape[1], 2])
+    for x in range(shape[0]):
+        for y in range(shape[1]):
+            points[x, y] = find_line_intersection(x_lines[x], y_lines[y])
 
+    return points
 
-points = np.zeros([15, 8, 2])
-for x in range(15):
-    for y in range(8):
-        points[x, y] = find_line_intersection(x_lines[x], y_lines[y])
-
-plt.figure(figsize=[12, 8])
-plt.imshow(x_ims[7])
-plt.scatter(points[:, :, 0], points[:, :, 1], s=1)
-plt.show()
+if __name__ == '__main__':
+    points = get_intersection_points('calibration_images/proj_calibration_3', 'kinect_calib.json')
+    plt.scatter(points[..., 0], points[..., 1])
+    plt.show()
