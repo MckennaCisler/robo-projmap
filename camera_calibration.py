@@ -47,7 +47,7 @@ def capture_images(direc):
     images = []
     for i in range(NUM_IMAGES):
         print("capturing")
-        img = k.get_color_frame()
+        img = k.get_single_color_frame()
         print("done; hit enter to capture next")
         cv2.imshow('img', img)
         cv2.waitKey()
