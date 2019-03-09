@@ -23,6 +23,10 @@ def find_line(base_im, im, threshhold=0.1, dist=12):
     im /= np.mean(im)
 
     r, t = find_line_binary_image(im - base_im > threshhold)
+
+    if r < 0:
+        r *= -1
+        t += np.pi
     wt = np.maximum(im - base_im, 0)
 
     rs = np.sum(np.indices(wt.shape) * np.array([[[np.sin(t)]], [[np.cos(t)]]]), 0)
@@ -43,11 +47,16 @@ def find_line(base_im, im, threshhold=0.1, dist=12):
     rho = np.abs(np.dot(mean, vec[:, small]))
     theta = np.arctan2(vec[0, small], vec[1, small])
 
-    if theta > t + np.pi / 2:
+    while theta > t + np.pi / 2:
         theta -= np.pi
-    if theta < t - np.pi / 2:
+        rho *= -1
+    while theta < t - np.pi / 2:
         theta += np.pi
+        rho *= -1
+    if np.sign(rho) != np.sign(r):
+        rho *= -1
 
+    print(r, t, rho, theta)
 
     return rho, theta
 
@@ -78,7 +87,7 @@ def get_intersection_points(proj_im_dir, camera_calibration_file, shape=(15, 8))
     x_ims = [cv2.undistort(im, intr, dist, None, newcameramtx) for im in x_ims]
     y_ims = [cv2.undistort(im, intr, dist, None, newcameramtx) for im in y_ims]
 
-    plt.imshow(x_ims[4])
+    plt.imshow(y_ims[7])
 
     x_lines = [find_line(base_im, im) for im in x_ims]
     y_lines = [find_line(base_im, im) for im in y_ims]
@@ -91,6 +100,6 @@ def get_intersection_points(proj_im_dir, camera_calibration_file, shape=(15, 8))
     return points
 
 if __name__ == '__main__':
-    points = get_intersection_points('calibration_images/proj_calibration_3', 'kinect_calib.json')
+    points = get_intersection_points('calibration_images/proj_calib_2', 'kinect_calib.json')
     plt.scatter(points[..., 0], points[..., 1])
     plt.show()
