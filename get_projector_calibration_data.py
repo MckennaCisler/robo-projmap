@@ -13,12 +13,13 @@ def write_image(imname, im):
         im[:, :, :3] = im[:, :, 2::-1]
     cv2.imwrite(imname, im)
 
-k = Kinect()
 w = Fullscreen_Window()
 w.clear()
 w.update()
 sleep(3)
-base_im = k.get_color_frame()
+k = Kinect()
+k.start()
+base_im = k.get_current_color_frame()
 
 height, width = w.get_dims()
 print('screen_dims:', width, height)
@@ -27,21 +28,19 @@ x_ims = []
 for x in range(1, 16):
     w.clear()
     w.draw_line((width * x / 16, 0), (width * x / 16, height), fill='white', width=3)
-    sleep(0.5)
-    x_ims.append(k.get_color_frame())
-    sleep(0.5)
+    sleep(0.2)
+    x_ims.append(k.get_current_color_frame())
 
 y_ims = []
 for y in range(1, 9):
     w.clear()
     w.draw_line((0, height * y / 9), (width, height * y / 9), fill='white', width=3)
-    sleep(0.5)
-    y_ims.append(k.get_color_frame())
-    sleep(0.5)
+    sleep(0.2)
+    y_ims.append(k.get_current_color_frame())
 
+k.stop()
 
-
-
+print("writing images")
 write_image('calibration_images/base.png', base_im)
 for i, x_im in enumerate(x_ims):
     write_image('calibration_images/x_im%d.png' % (i,), x_im)
