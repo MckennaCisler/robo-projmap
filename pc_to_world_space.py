@@ -100,6 +100,6 @@ def get_intersection_points(proj_im_dir, camera_calibration_file, shape=(15, 8))
     return points
 
 if __name__ == '__main__':
-    points = get_intersection_points('calibration_images/proj_calib_3', 'kinect_calib.json')
+    points = get_intersection_points('calibration_images/proj_calib_2', 'kinect_calib.json')
     plt.scatter(points[..., 0], points[..., 1])
     plt.show()
