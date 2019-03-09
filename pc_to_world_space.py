@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 import sys
 import json
 
-def read_projector_calibration_images(directory):
-    base_im = cv2.imread(join(directory, 'base.png'), cv2.IMREAD_GRAYSCALE)
-    x_ims = [cv2.imread(join(directory, 'x_im%d.png' % (i, )), cv2.IMREAD_GRAYSCALE) for i in range(15)]
-    y_ims = [cv2.imread(join(directory, 'y_im%d.png' % (i, )), cv2.IMREAD_GRAYSCALE) for i in range(8)]
+def read_projector_calibration_images(directory, camera):
+    base_im = camera.load_image_grayscale(join(directory, 'base.png'))
+    x_ims = [camera.load_image_grayscale(join(directory, 'x_im%d.png' % (i, ))) for i in range(15)]
+    y_ims = [camera.load_image_grayscale(join(directory, 'y_im%d.png' % (i, ))) for i in range(8)]
 
     return base_im, x_ims, y_ims
 
@@ -56,8 +56,6 @@ def find_line(base_im, im, threshhold=0.1, dist=12):
     if np.sign(rho) != np.sign(r):
         rho *= -1
 
-    print(r, t, rho, theta)
-
     return rho, theta
 
 def find_line_binary_image(im):
@@ -74,30 +72,21 @@ def find_line_intersection(line1_rt, line2_rt):
     arr_inv = np.linalg.inv(arr)
     return np.matmul(arr_inv, np.array([r1, r2]))
 
-def get_intersection_points(proj_im_dir, camera_calibration_file, shape=(15, 8)):
-    loads = json.load(open(camera_calibration_file, 'r'))
-    intr, dist, rvecs, tvecs = [np.array(load) for load in loads]
-
-    base_im, x_ims, y_ims = read_projector_calibration_images(proj_im_dir)
-
-    h,  w = base_im.shape[:2]
-    newcameramtx, roi=cv2.getOptimalNewCameraMatrix(intr,dist,(w,h),1,(w,h))
-
-    base_im = cv2.undistort(base_im, intr, dist, None, newcameramtx)
-    x_ims = [cv2.undistort(im, intr, dist, None, newcameramtx) for im in x_ims]
-    y_ims = [cv2.undistort(im, intr, dist, None, newcameramtx) for im in y_ims]
-
-    plt.imshow(y_ims[7])
+def get_intersection_points(proj_im_dir, camera, shape=(15, 8)):
+    base_im, x_ims, y_ims = read_projector_calibration_images(proj_im_dir, camera)
 
     x_lines = [find_line(base_im, im) for im in x_ims]
     y_lines = [find_line(base_im, im) for im in y_ims]
 
-    points = np.zeros([shape[0], shape[1], 2])
+    cam_points = np.zeros([shape[0], shape[1], 2])
+    proj_points = np.zeros([shape[0], shape[1], 2])
+
     for x in range(shape[0]):
         for y in range(shape[1]):
-            points[x, y] = find_line_intersection(x_lines[x], y_lines[y])
+            proj_points[x, y] = [1366 * (x+1) / 16.0, 768 * (y+1) / 9.0]
+            cam_points[x, y] = find_line_intersection(x_lines[x], y_lines[y])
 
-    return points
+    return proj_points, cam_points
 
 if __name__ == '__main__':
     points = get_intersection_points('calibration_images/proj_calib_2', 'kinect_calib.json')

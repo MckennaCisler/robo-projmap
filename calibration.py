@@ -4,6 +4,9 @@ import cv2
 import json
 
 def calibrate_camera(objpoints, imgpoints, imgshape):
+    objpoints = [o.astype(np.float32) for o in objpoints]
+    imgpoints = [o.astype(np.float32) for o in imgpoints]
+
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, (imgshape), None, None)
     return mtx, dist, rvecs, tvecs
 
@@ -11,8 +14,8 @@ def dump_calibration(fname, mtx, dist, rvecs, tvecs):
     with open(fname, "w") as f:
         json.dump((
             mtx.tolist(),
-            dist.tolist(), 
-            [r.tolist() for r in rvecs], 
+            dist.tolist(),
+            [r.tolist() for r in rvecs],
             [t.tolist() for t in tvecs]),
         f, indent=4)
 
