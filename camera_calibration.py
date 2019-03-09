@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import cv2
-import kinect
+from kinect import *
 import sys
 from os.path import join
 import matplotlib.pyplot as plt
@@ -42,11 +42,12 @@ def collect_calib_data(images):
     return objpoints, imgpoints
 
 def capture_images(direc):
+    k = Kinect()
     print("writing %d frames to %s" % (NUM_IMAGES, direc))
     images = []
     for i in range(NUM_IMAGES):
         print("capturing")
-        img = kinect.get_color_frame()
+        img = k.get_color_frame()
         print("done; hit enter to capture next")
         cv2.imshow('img', img)
         cv2.waitKey()
