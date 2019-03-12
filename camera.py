@@ -2,6 +2,12 @@ import json
 import numpy as np
 import cv2
 
+def make_extrinsic(rvec, tvec):
+    rotation_matrix = eulerAnglesToRotationMatrix(rvec.flatten())
+    extrinsic = np.concatenate([rotation_matrix, tvec], 1)
+    return np.concatenate([extrinsic, np.array([[0, 0, 0, 1]])], 0)
+
+
 
 def eulerAnglesToRotationMatrix(theta):
     R_x = np.array([[1,         0,                  0                   ],
@@ -110,5 +116,11 @@ class Camera:
     def getCameraAtLoc(self, rvec, tvec):
         rotation_matrix = eulerAnglesToRotationMatrix(rvec.flatten())
         extrinsic = np.concatenate([rotation_matrix, tvec], 1)
+        camera_matrix = np.matmul(self.nintr, extrinsic)
+        return PositionalCamera(camera_matrix, [self.w, self.h])
+
+    def getCameraWithExtr(self, extrinsic):
+        rotation_matrix = eulerAnglesToRotationMatrix(rvec.flatten())
+        extrinsic = extrinsic[:3, :4]
         camera_matrix = np.matmul(self.nintr, extrinsic)
         return PositionalCamera(camera_matrix, [self.w, self.h])

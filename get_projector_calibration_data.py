@@ -4,6 +4,9 @@ from project import Fullscreen_Window
 from kinect import *
 from time import sleep
 import cv2
+import sys
+from os.path import join
+import os
 
 def write_image(imname, im):
     im = np.copy(im)
@@ -41,8 +44,9 @@ for y in range(1, 9):
 k.stop()
 
 print("writing images")
-write_image('calibration_images/base.png', base_im)
+os.mkdir(join('calibration_images', sys.argv[1]))
+write_image(join('calibration_images', sys.argv[1], 'base.png'), base_im)
 for i, x_im in enumerate(x_ims):
-    write_image('calibration_images/x_im%d.png' % (i,), x_im)
+    write_image(join('calibration_images', sys.argv[1], 'x_im%d.png') % (i,), x_im)
 for i, y_im in enumerate(y_ims):
-    write_image('calibration_images/y_im%d.png' % (i,), y_im)
+    write_image(join('calibration_images', sys.argv[1], 'y_im%d.png') % (i,), y_im)
