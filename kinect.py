@@ -47,7 +47,7 @@ class Kinect:
             time.sleep(0.001)
         depth_small, rgb_small, depth_big = self.device.registration.apply(\
             self.latest_color_frame, self.latest_depth_frame, with_big_depth=True)
-        return self._convert_frame(self.latest_color_frame), depth_big.to_array().copy()[1:-1,:]
+        return self._convert_frame(self.latest_color_frame), depth_big.to_array().copy()[1:-1,::-1]
 
     # single frame calls
 
