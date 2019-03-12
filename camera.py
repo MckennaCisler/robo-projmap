@@ -86,6 +86,7 @@ class Camera:
 
     def __init__(self, intr, dist, *, x_res, y_res):
         self.intr, self.dist = intr, dist
+        self.dist = np.zeros([5])
 
         self.w = x_res
         self.h = y_res
@@ -120,7 +121,6 @@ class Camera:
         return PositionalCamera(camera_matrix, [self.w, self.h])
 
     def getCameraWithExtr(self, extrinsic):
-        rotation_matrix = eulerAnglesToRotationMatrix(rvec.flatten())
         extrinsic = extrinsic[:3, :4]
         camera_matrix = np.matmul(self.nintr, extrinsic)
         return PositionalCamera(camera_matrix, [self.w, self.h])

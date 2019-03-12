@@ -40,6 +40,11 @@ class Fullscreen_Window:
         self.frame.create_line(p1[0], p1[1], p2[0], p2[1], **kwargs)
         self.update()
 
+    def draw_points(self, xs, ys, s=100, **kwargs):
+        for x, y in zip(xs, ys):
+            self.frame.create_oval(x-s, y-s, x+s, y+s, **kwargs)
+        self.update()
+
     def clear(self):
         self.frame.delete('all')
         self.update()
