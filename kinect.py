@@ -42,6 +42,13 @@ class Kinect:
             time.sleep(0.001)
         return self._convert_frame(self.latest_depth_frame)
 
+    def get_current_rgbd_frame(self):
+        while self.latest_color_frame is None or self.latest_depth_frame is None:
+            time.sleep(0.001)
+        depth_small, rgb_small, depth_big = self.device.registration.apply(\
+            self.latest_color_frame, self.latest_depth_frame, with_big_depth=True)
+        return self._convert_frame(self.latest_color_frame), depth_big.to_array().copy()[1:-1,:]
+
     # single frame calls
 
     def get_single_color_frame(self):
@@ -71,14 +78,22 @@ if __name__ == "__main__":
     k.start() # for speed
     imgs = []
 
-    print("capturing images")
-    for i in range(100):
-        imgs.append(k.get_current_color_frame())
+    rgb, d = k.get_current_rgbd_frame()
+    print(d.shape, rgb.shape)
     k.stop()
+    cv2.imshow('d', d*0.001)
+    cv2.waitKey(0)
+    cv2.imshow('rgb', rgb[..., 2::-1])
+    cv2.waitKey(0)
 
-    print("displaying images")
-    for i in range(len(imgs)):
-        print("display image %d" % i)
-        cv2.imshow('img', imgs[i][..., 2::-1])
-        cv2.waitKey(10)
+    # print("capturing images")
+    # for i in range(100):
+    #     imgs.append(k.get_current_color_frame())
+    # k.stop()
+
+    # print("displaying images")
+    # for i in range(len(imgs)):
+    #     print("display image %d" % i)
+    #     cv2.imshow('img', imgs[i][..., 2::-1])
+    #     cv2.waitKey(10)
 
