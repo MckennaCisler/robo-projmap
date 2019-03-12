@@ -21,27 +21,27 @@ x_coords = np.arange(1920)
 
 k = Kinect()
 k.start()
-_, d = k.get_current_rgbd_frame()
 
-plt.imshow(d)
-plt.show()
+for i in range(100):
+    _, d = k.get_current_rgbd_frame() # (None, np.ones((1080, 1920)))
 
-d_coord = d[540, :]
+    d_coord = d[540, :]
 
-world_space = camera.get_world_space(y=y_coords, x=x_coords, depth=d_coord / 30.0)
-projector_space = np.round(projector.get_camera_space(world_space)).astype(np.int32)
+    world_space = camera.get_world_space(y=y_coords, x=x_coords, depth=d_coord / 30.0)
+    projector_space = np.round(projector.get_camera_space(world_space)).astype(np.int32)
 
-projector_space_valid = np.logical_and(
-    np.logical_and(projector_space[..., 0] >= 0, projector_space[..., 0] < 1368),
-    np.logical_and(projector_space[..., 1] >= 0, projector_space[..., 1] < 768))
+    projector_space_valid = np.logical_and(
+        np.logical_and(projector_space[..., 0] >= 0, projector_space[..., 0] < 1368),
+        np.logical_and(projector_space[..., 1] >= 0, projector_space[..., 1] < 768))
 
-projector_space = projector_space[projector_space_valid, :]
+    projector_space = projector_space[projector_space_valid, :]
 
-w.draw_points(projector_space[..., 0].flatten(), projector_space[..., 1].flatten(), fill='white', s=5)
-sleep(4)
+    w.clear()
+    w.draw_points(projector_space[..., 0].flatten(), projector_space[..., 1].flatten(), fill='white', s=5, outline='white')
+    sleep(0.05)
 
-rgb,_  = k.get_current_rgbd_frame()
-cv2.imwrite('testing.png', rgb)
+# rgb,_  = k.get_current_rgbd_frame()
+# cv2.imwrite('testing.png', rgb)
 
 k.stop()
 print(projector_space)

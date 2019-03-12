@@ -31,10 +31,10 @@ for i, projector_dir in enumerate([
     base_im = camera.load_image_grayscale(join(projector_dir, 'base.png'))
     ret, corners = cv2.findChessboardCorners(base_im, (GRID_X_NUM, GRID_Y_NUM), None)
 
-    # img = np.stack([base_im, base_im, base_im], -1)
-    # cv2.drawChessboardCorners(img, (GRID_X_NUM, GRID_Y_NUM), corners, ret)
-    # cv2.imshow('img', img)
-    # cv2.waitKey(1000)
+    img = np.stack([base_im, base_im, base_im], -1)
+    cv2.drawChessboardCorners(img, (GRID_X_NUM, GRID_Y_NUM), corners, ret)
+    cv2.imshow('img', img)
+    cv2.waitKey(1000)
 
     worked, rvec, tvec = camera.solvePnP(objp, corners)
     camera_extrs.append(make_extrinsic(rvec, tvec))

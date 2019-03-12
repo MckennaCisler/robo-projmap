@@ -26,8 +26,10 @@ class Kinect:
 
     def _frame_listener(self, frametype, frame):
         if frametype == FrameType.Color:
+            del(self.latest_color_frame)
             self.latest_color_frame = frame
         elif frametype == FrameType.Depth:
+            del(self.latest_depth_frame)
             self.latest_depth_frame = frame
         elif frametype == FrameType.Ir:
             pass # nothing yet
@@ -47,7 +49,12 @@ class Kinect:
             time.sleep(0.001)
         depth_small, rgb_small, depth_big = self.device.registration.apply(\
             self.latest_color_frame, self.latest_depth_frame, with_big_depth=True)
-        return self._convert_frame(self.latest_color_frame), depth_big.to_array().copy()[1:-1,::-1]
+        color = self._convert_frame(self.latest_color_frame)
+        depth = depth_big.to_array()[1:-1,::-1]
+        del(depth_small)
+        del(rgb_small)
+        del(depth_big)
+        return color, depth
 
     # single frame calls
 
@@ -65,7 +72,7 @@ class Kinect:
         return self._convert_frame(frame1)
 
     def _convert_frame(self, frame):
-        img = frame.to_array().copy()
+        img = frame.to_array()
         img = img[:, ::-1]
         img[..., :3] = img[..., 2::-1] # bgrx -> rgbx
         return img
