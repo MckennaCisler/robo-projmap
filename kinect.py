@@ -28,6 +28,7 @@ class Kinect:
         self._bigdepth = Frame(1920, 1082, 4) # malloc'd
         self._undistorted = Frame(512, 424, 4)
         self._registered = Frame(512, 424, 4)
+        self._color_dump = Frame(1920, 1080, 4)
 
         num_devices = self.fn.enumerateDevices()
         if num_devices <= kinect_num:
@@ -36,8 +37,7 @@ class Kinect:
         self.serial = self.fn.getDeviceSerialNumber(kinect_num)
         self.device = self.fn.openDevice(self.serial, pipeline=pipeline)
 
-        self.listener = SyncMultiFrameListener(
-            FrameType.Color | FrameType.Ir | FrameType.Depth)
+        self.listener = SyncMultiFrameListener(FrameType.Color | FrameType.Depth)
 
         # Register listeners
         self.device.setColorFrameListener(self.listener)
@@ -60,29 +60,50 @@ class Kinect:
         if self.device:
             self.device.stop()
 
-    def get_current_color_frame(self):
-        return self._get_frame_of_type("color")
-    
-    def get_current_depth_frame(self):
-        return self._get_frame_of_type("depth")
+    ### If copy is False for these functoins, make sure to call release_frames
+    ### when you're done with the returned frame ###
 
-    def _get_frame_of_type(self, typ):
+    def get_current_color_frame(self, copy=True):
         self._frames = self.listener.waitForNewFrame()
-        ret = self._convert_frame(self._frames[typ])
-        self.listener.release(self._frames)
+        ret = self._convert_color_frame(self._frames["color"], copy=copy)
+        if copy:
+            self.release_frames()
+        return ret
+    
+    def get_current_depth_frame(self, copy=True):
+        self._frames = self.listener.waitForNewFrame()
+        if copy:
+            ret = self._frames["depth"].asarray().copy()
+            self.release_frames()
+        else:
+            ret = self._frames["depth"].asarray()
         return ret
 
-    def get_current_rgbd_frame(self):
+    def get_current_rgbd_frame(self, copy=True):
         self._frames = self.listener.waitForNewFrame()
 
         self.registration.apply(self._frames["color"], self._frames["depth"], 
             self._undistorted, self._registered, bigdepth=self._bigdepth)
 
-        color = self._convert_frame(self._frames["color"])
-        depth = self._bigdepth.asarray(np.float32).copy()[1:-1,::-1]
-        self.listener.release(self._frames)
-
+        color = self._convert_color_frame(self._frames["color"], copy=copy)
+        depth = self._convert_bigdepth_frame(self._bigdepth, copy=copy)
+        if copy:
+            self.release_frames()
         return color, depth
+
+    def get_current_bigdepth_frame(self, copy=True):
+        self._frames = self.listener.waitForNewFrame()
+
+        self.registration.apply(self._frames["color"], self._frames["depth"], 
+            self._undistorted, self._registered, bigdepth=self._bigdepth)
+
+        depth = self._convert_bigdepth_frame(self._bigdepth, copy=copy)
+        if copy:
+            self.release_frames()
+        return depth
+
+    def release_frames(self):
+        self.listener.release(self._frames)
 
     # single frame calls
 
@@ -98,8 +119,18 @@ class Kinect:
         self.stop()
         return ret
 
-    def _convert_frame(self, frame):
-        img = frame.asarray().copy()
+    def _convert_bigdepth_frame(self, frame, copy=True):
+        if copy:
+            d = self._bigdepth.asarray(np.float32).copy()
+        else:
+            d = self._bigdepth.asarray(np.float32)
+        return d[1:-1,::-1]
+
+    def _convert_color_frame(self, frame, copy=True):
+        if copy:
+            img = frame.asarray().copy()
+        else:
+            img = frame.asarray()
         img = img[:, ::-1]
         img[..., :3] = img[..., 2::-1] # bgrx -> rgbx
         return img

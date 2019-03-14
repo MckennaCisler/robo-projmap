@@ -3,7 +3,7 @@ import numpy as np
 from kinect import Kinect
 from camera import Camera
 from project import Fullscreen_Window
-from time import sleep
+import time
 import cv2
 import matplotlib.pyplot as plt
 
@@ -23,7 +23,11 @@ k = Kinect()
 k.start()
 
 for i in range(1000):
-    _, d = k.get_current_rgbd_frame() # (None, np.ones((1080, 1920)))
+    start = time.time()
+    d = k.get_current_bigdepth_frame(copy=False)
+    print("kinect time: %f\t" % (time.time() - start), end="")
+    
+    start = time.time()
 
     d_coord = d[540, :]
 
@@ -36,9 +40,15 @@ for i in range(1000):
 
     projector_space = projector_space[projector_space_valid, :]
 
+    print("math time: %f\t" % (time.time() - start), end="")
+
+    start = time.time()
     w.clear()
     w.draw_points(projector_space[..., 0].flatten(), projector_space[..., 1].flatten(), fill='white', s=5, outline='white')
-    sleep(0.05)
+    print("drawing time: %f" % (time.time() - start))
+
+    k.release_frames()
+    time.sleep(0.05)
 
 # rgb,_  = k.get_current_rgbd_frame()
 # cv2.imwrite('testing.png', rgb)
