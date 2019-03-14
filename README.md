@@ -3,4 +3,4 @@ AR without headsets: tool to represent a robot's internal state via live project
 
 ## Dependencies
 - [libfreenect2](https://github.com/OpenKinect/libfreenect2)
-- [Python freenect2 interface](https://rjw57.github.io/freenect2-python/)
+- [Python freenect2 interface](https://github.com/r9y9/pylibfreenect2)

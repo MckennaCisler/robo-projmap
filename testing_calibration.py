@@ -22,7 +22,7 @@ x_coords = np.arange(1920)
 k = Kinect()
 k.start()
 
-for i in range(100):
+for i in range(1000):
     _, d = k.get_current_rgbd_frame() # (None, np.ones((1080, 1920)))
 
     d_coord = d[540, :]
