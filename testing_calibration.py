@@ -7,6 +7,8 @@ import time
 import cv2
 import matplotlib.pyplot as plt
 
+GRID_VS_LINE = True
+
 w = Fullscreen_Window()
 w.clear()
 w.update()
@@ -16,20 +18,33 @@ p_intr, p_dist, c_extr, p_extr = [np.array(a) for a in json.load(open('camera_pr
 camera = camera.getCameraWithExtr(c_extr[2])
 projector = Camera(p_intr, p_dist, x_res=1366, y_res=768).getCameraWithExtr(p_extr[2])
 
-y_coords = np.ones([1920]) * 1080 / 2
-x_coords = np.arange(1920)
+if GRID_VS_LINE:
+    gridshape = (30, 60)
+    rows, cols = np.indices(gridshape)
+    rows = (1080 * rows / gridshape[0]).astype(np.int32)
+    cols = (1920 * cols / gridshape[1]).astype(np.int32)
+    y_coords = rows.flatten()
+    x_coords = cols.flatten()
+else:
+    y_coords = np.ones([1920]) * 1080 / 2
+    x_coords = np.arange(1920)
 
 k = Kinect()
 k.start()
 
-for i in range(1000):
+for i in range(100):
     start = time.time()
-    d = k.get_current_bigdepth_frame(copy=False)
+    rgb, d = k.get_current_rgbd_frame(copy=False)
     print("kinect time: %f\t" % (time.time() - start), end="")
+    cv2.imshow('color', rgb)
+    cv2.waitKey(1)
     
     start = time.time()
 
-    d_coord = d[540, :]
+    if GRID_VS_LINE:
+        d_coord = d[rows, cols].flatten()
+    else:
+        d_coord = d[540, :]
 
     world_space = camera.get_world_space(y=y_coords, x=x_coords, depth=d_coord / 30.0)
     projector_space = np.round(projector.get_camera_space(world_space)).astype(np.int32)
@@ -50,8 +65,7 @@ for i in range(1000):
     k.release_frames()
     time.sleep(0.05)
 
-# rgb,_  = k.get_current_rgbd_frame()
-# cv2.imwrite('testing.png', rgb)
+rgb  = k.get_current_color_frame()
+cv2.imwrite('testing.png', rgb)
 
 k.stop()
-print(projector_space)
