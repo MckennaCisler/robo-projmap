@@ -51,7 +51,7 @@ class Fullscreen_Window:
             self.frame.create_oval(x-s, y-s, x+s, y+s, **kwargs)
         self.update()
 
-    def draw_point(self, x, y, c, s=100, **kwargs):
+    def draw_point(self, x, y, c='white', s=100, **kwargs):
         self.frame.create_oval(x-s, y-s, x+s, y+s, fill=c, outline=c, **kwargs)
         self.update()
 
