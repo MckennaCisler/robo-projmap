@@ -22,6 +22,9 @@ class Fullscreen_Window:
         self.tk.bind("<F11>", self.toggle_fullscreen)
         self.tk.bind("<Escape>", self.end_fullscreen)
 
+    def __del__(self):
+        self.close()
+
     def toggle_fullscreen(self, event=None):
         self.state = not self.state  # Just toggling the boolean
         self.tk.attributes("-fullscreen", self.state)
@@ -31,6 +34,9 @@ class Fullscreen_Window:
         self.state = False
         self.tk.attributes("-fullscreen", False)
         return "break"
+
+    def close(self):
+        self.tk.destroy()
 
     def update(self):
         self.tk.update_idletasks()
@@ -45,8 +51,13 @@ class Fullscreen_Window:
             self.frame.create_oval(x-s, y-s, x+s, y+s, **kwargs)
         self.update()
 
+<<<<<<< HEAD
     def fill_circle(self, x, y, s, c):
         self.frame.create_oval(x-s, y-s, x+s, y+s, fill=c, outline=c)
+=======
+    def draw_point(self, x, y, s=100, **kwargs):
+        self.frame.create_oval(x-s, y-s, x+s, y+s, **kwargs)
+>>>>>>> d737007ff431c06195f1250421eb6ea7d03965f8
         self.update()
 
     def clear(self):
