@@ -45,6 +45,10 @@ class Fullscreen_Window:
             self.frame.create_oval(x-s, y-s, x+s, y+s, **kwargs)
         self.update()
 
+    def fill_circle(self, x, y, s, c):
+        self.frame.create_oval(x-s, y-s, x+s, y+s, fill=c, outline=c)
+        self.update()
+
     def clear(self):
         self.frame.delete('all')
         self.update()

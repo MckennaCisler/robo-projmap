@@ -15,6 +15,8 @@ w.update()
 
 camera = Camera.fromJson('kinect_calib.json', x_res=1920, y_res=1080)
 p_intr, p_dist, c_extr, p_extr = [np.array(a) for a in json.load(open('camera_proj_calib.json' ,'r'))]
+print( json.load(open('camera_proj_calib.json' ,'r'))[1])
+
 camera = camera.getCameraWithExtr(c_extr[2])
 projector = Camera(p_intr, p_dist, x_res=1366, y_res=768).getCameraWithExtr(p_extr[2])
 
@@ -32,13 +34,13 @@ else:
 k = Kinect()
 k.start()
 
-for i in range(100):
+for i in range(500):
     start = time.time()
     rgb, d = k.get_current_rgbd_frame(copy=False)
     print("kinect time: %f\t" % (time.time() - start), end="")
     cv2.imshow('color', rgb)
     cv2.waitKey(1)
-    
+
     start = time.time()
 
     if GRID_VS_LINE:
