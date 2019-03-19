@@ -46,7 +46,6 @@ def get_me_some_correspondances(kinect, project):
 
     imd = color_im / 255.0 - base_im / 255.0
     imd = imd[..., :3]
-    plt.imshow(imd[:] + 0.5)
     imb = gaussian_filter(imd, [8.5, 8.5, 0])
 
     m = np.argmax(imb[..., 0] * 2 - imb[..., 1] - imb[..., 2])
@@ -74,26 +73,33 @@ def get_me_some_correspondances(kinect, project):
         cam_locs[:, -1] > 200,
         cam_locs[:, -1] < 3000)
 
-    return cam_locs[valid], proj_locs[valid]
+    return imd, cam_locs[valid], proj_locs[valid]
 
 w = Fullscreen_Window()
 w.clear()
 k = Kinect()
 k.start()
 
+i = 0
+
 for i in range(20):
     all_cam_locs, all_proj_locs = [], []
 
-    cam_locs, proj_locs = get_me_some_correspondances(k, w)
+    im, cam_locs, proj_locs = get_me_some_correspondances(k, w)
+    im += 0.5
     plt.scatter(cam_locs[:, 0], cam_locs[:, 1])
-    plt.savefig('correspondances/corr%d.png' % (i, ))
 
     all_cam_locs.append(cam_locs)
     all_proj_locs.append(proj_locs)
 
+    for cl in cam_locs:
+        plt.imshow(im[cl[1]-20:im[cl[1]+20], im[cl[0]-20:im[cl[0]+20]])
+
     if i % 5 == 4:
         w.clear()
         sleep(7)
+
+all_cam_locs()
 
 pickle.dump({'cam locs': all_cam_locs, 'proj_locs':all_proj_locs},
             open('correspondances/data.pickle', 'wb'))
