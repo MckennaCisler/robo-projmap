@@ -1,4 +1,4 @@
-import draw
+import project
 from time import time
 
 
@@ -21,11 +21,11 @@ class FPSRecorder:
             print('FPS: %0.0f' % (1 / self.frame_time, ))
             self.last_print = t
 
-draw.start()
+project.start()
 fps = FPSRecorder(averaging=0.0)
 while True:
-    if draw.draw_frame():
-        draw.end()
+    if project.draw_frame():
+        project.stop()
         break
     else:
         fps.record_frame()
