@@ -21,6 +21,14 @@ GLuint programID;
 GLint MatrixID;
 glm::mat4 MVP;
 
+GLuint elementbuffer;
+
+// left to right
+static const unsigned int g_indices_data[] = {
+        3, 4, 5,
+        0, 1, 2,
+        6, 7, 8,
+};
 
 static const GLfloat g_vertex_buffer_data[] = {
         -1.0f, -1.0f, 0.0f,
@@ -90,7 +98,13 @@ PyObject *start(PyObject *self, PyObject *args) {
     glGenBuffers(1, &vertexbuffer);    // Close OpenGL window and terminate GLFW
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-	Py_RETURN_NONE;
+
+    // Generate a buffer for the indices
+    glGenBuffers(1, &elementbuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(g_indices_data), g_indices_data, GL_STATIC_DRAW);
+
+    Py_RETURN_NONE;
 }
 
 PyObject *draw_frame(PyObject *self, PyObject *args) {
@@ -115,7 +129,13 @@ PyObject *draw_frame(PyObject *self, PyObject *args) {
 
 
     // Draw Traingles
-    glDrawArrays(GL_TRIANGLES, 0, 9);
+    //glDrawArrays(GL_TRIANGLES, 0, 9);
+    glDrawElements(
+        GL_TRIANGLES,               // mode
+        sizeof(g_indices_data),     // count
+        GL_UNSIGNED_INT,            // type
+        (void*)0                    // element array buffer offset
+    );
 
     glDisableVertexAttribArray(0);
 
