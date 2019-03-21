@@ -19,9 +19,7 @@ def get_me_some_correspondances(kinect, project):
 
     l = np.array(locs)
     diffs = np.expand_dims(l, 0) - np.expand_dims(l, 1)
-    print(diffs)
     dd = np.sum(diffs**2, -1)
-    print(dd)
 
     while np.min(dd[dd != 0]) < 10000:
         locs = [
@@ -33,9 +31,6 @@ def get_me_some_correspondances(kinect, project):
         l = np.array(locs)
         diffs = np.expand_dims(l, 0) - np.expand_dims(l, 1)
         dd = np.sum(diffs**2, -1)
-
-    print(locs)
-
 
     w.draw_point(locs[0][0], locs[0][1], s=20, c='red')
     w.draw_point(locs[1][0], locs[1][1], s=20, c='green')
@@ -80,28 +75,38 @@ w.clear()
 k = Kinect()
 k.start()
 
-i = 0
+a = 0
 
+all_cam_locs, all_proj_locs = [], []
 for i in range(20):
-    all_cam_locs, all_proj_locs = [], []
-
     im, cam_locs, proj_locs = get_me_some_correspondances(k, w)
     im += 0.5
-    plt.scatter(cam_locs[:, 0], cam_locs[:, 1])
 
     all_cam_locs.append(cam_locs)
     all_proj_locs.append(proj_locs)
 
+    print(cam_locs)
+
     for cl in cam_locs:
-        plt.imshow(im[cl[1]-20:im[cl[1]+20], im[cl[0]-20:im[cl[0]+20]])
+        plt.imshow(im[int(cl[1])-20:int(cl[1])+20, int(cl[0])-20:int(cl[0])+20])
+        plt.scatter(20, 20, c='white')
+        #plt.savefig('correspondances/corr%d.png' % (a, ))
+        a += 1
+        plt.clf()
+        plt.close()
 
     if i % 5 == 4:
         w.clear()
         sleep(7)
 
-all_cam_locs()
+k.stop()
 
+print('ending')
+print(all_cam_locs)
+
+all_cam_locs = np.concatenate(all_cam_locs, 0)
+all_proj_locs = np.concatenate(all_proj_locs, 0)
+
+print('pickling')
 pickle.dump({'cam locs': all_cam_locs, 'proj_locs':all_proj_locs},
             open('correspondances/data.pickle', 'wb'))
-
-k.stop()
