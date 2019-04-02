@@ -1,7 +1,6 @@
 import project
+import numpy as np
 from time import time
-
-
 
 class FPSRecorder:
     def __init__(self, print_frequency=1.0, averaging=0.9):
@@ -21,10 +20,36 @@ class FPSRecorder:
             print('FPS: %0.0f' % (1 / self.frame_time, ))
             self.last_print = t
 
+color = np.array([
+    255, 255, 255,
+    255, 255, 255,
+    255, 255, 255, 
+    255, 255, 255,
+    255, 255, 255,
+    255, 255, 255,
+    255, 255, 255,
+], dtype=np.int32)
+
+xyd = np.array([
+    -1., -1., 0.,
+    1., -1., 0.,
+    0.,  1., 0.,
+    -3., -1., 0.,
+    -2.,  1., 0.,
+    3., -1., 0.,
+    2.,  1., 0.,
+], dtype=np.float32)
+
+indices = np.array([
+        3, 0, 4,
+        0, 1, 2,
+        1, 5, 6,
+], dtype=np.int32)
+
 project.start()
 fps = FPSRecorder(averaging=0.0)
 while True:
-    if project.draw_frame():
+    if project.draw_frame(color, xyd, indices):
         project.stop()
         break
     else:
