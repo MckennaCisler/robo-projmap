@@ -14,7 +14,7 @@
 using namespace glm;
 
 #define MAX_INPUT_RES 1920*1080
-#define VERTS_MAX_SIZE MAX_INPUT_RES
+#define VERTS_MAX_SIZE 6*MAX_INPUT_RES
 #define INDICES_MAX_SIZE 3*MAX_INPUT_RES
 
 GLFWwindow* window;
@@ -132,41 +132,38 @@ PyObject *start(PyObject *self, PyObject *args) {
 }
 
 /**
- * Takes in (np.ndarray color values, np.ndarray xyd points, np.ndarray triangle indices). 
+ * Takes in (np.ndarray xyd, color points, np.ndarray triangle indices). 
  * The color and points arrays should have size N*3, while the indices should have size at most N,
  * where N is the width*height of the image.
  * Returns true when the window was closed or None on error.
  */
 PyObject *draw_frame(PyObject *self, PyObject *args) {
     // read args
-    PyObject *arg_color = NULL, *arg_xyd = NULL, *arg_indices = NULL;
-    PyObject *arr_color = NULL, *arr_xyd = NULL, *arr_indices = NULL;
+    PyObject *arg_xyd_color = NULL, *arg_indices = NULL;
+    PyObject *arr_xyd_color = NULL, *arr_indices = NULL;
 
-    if (!PyArg_ParseTuple(args, "OOO", &arg_color, &arg_xyd, &arg_indices)) {
+    if (!PyArg_ParseTuple(args, "OO", &arg_xyd_color, &arg_indices)) {
         Py_RETURN_NONE;
     }
 
-    arr_color =     PyArray_FROM_OTF(arg_color, NPY_INT32, NPY_ARRAY_IN_ARRAY);
-    arr_xyd =       PyArray_FROM_OTF(arg_xyd, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
+    arr_xyd_color = PyArray_FROM_OTF(arg_xyd_color, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
     arr_indices =   PyArray_FROM_OTF(arg_indices, NPY_INT32, NPY_ARRAY_IN_ARRAY);
 
-    int color_size = PyArray_Size(arr_color);
-    int xyd_size = PyArray_Size(arr_xyd);
+    int xyd_color_size = PyArray_Size(arr_xyd_color);
     int indices_size = PyArray_Size(arr_indices);
 
-    if (color_size > 3*MAX_INPUT_RES || xyd_size > 3*MAX_INPUT_RES || indices_size > MAX_INPUT_RES) {
+    if (xyd_color_size > 6*MAX_INPUT_RES || indices_size > MAX_INPUT_RES) {
             fprintf(stderr, "Invalid input sizes to draw_frame\n");
             Py_RETURN_NONE;
     }
 
-    int *color_data =     (int*) PyArray_DATA(arr_color);
-    GLfloat *xyd_data =   (GLfloat*) PyArray_DATA(arr_xyd);
+    GLfloat *xyd_color_data = (GLfloat*) PyArray_DATA(arr_xyd_color);
     int *indices_data =   (int*) PyArray_DATA(arr_indices);
 
     // update data in buffers (reallocate the buffer objects beforehand for speed)
     // (see https://www.khronos.org/opengl/wiki/Buffer_Object_Streaming#Buffer_re-specification)
     // glBufferData(GL_ARRAY_BUFFER, VERTS_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, xyd_size * sizeof(GLfloat), xyd_data);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, xyd_color_size * sizeof(GLfloat), xyd_color_data);
     // glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDICES_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
     glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices_size * sizeof(int), indices_data);
 
@@ -177,16 +174,26 @@ PyObject *draw_frame(PyObject *self, PyObject *args) {
     glUseProgram(programID);
     glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
-    // enable vertices attribute buffer
+    // connect the xyz in first part of the buffer to the shader attribute
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
     glVertexAttribPointer(
             0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
             3,                  // size (3-space)
             GL_FLOAT,           // type
             GL_FALSE,           // normalized?
-            0,                  // stride
+            6*sizeof(GLfloat),  // stride
             (void*)0            // array buffer offset
+    );
+
+    // connect the color to the input color attribute of the vertex shader
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+            1,
+            3,                                      // size (RGB)
+            GL_FLOAT,
+            GL_FALSE,                               // normalized?
+            6*sizeof(GLfloat),                      // stride
+            (const GLvoid*)(3 * sizeof(GLfloat))    // after xyd coordinates
     );
 
     // Draw the triangles using the vertex indices in the indices data
@@ -198,6 +205,7 @@ PyObject *draw_frame(PyObject *self, PyObject *args) {
     );
 
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 
     // Swap buffers
     glfwSwapBuffers(window);
