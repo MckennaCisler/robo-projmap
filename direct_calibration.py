@@ -90,7 +90,7 @@ for i in range(20):
     for cl in cam_locs:
         plt.imshow(im[int(cl[1])-20:int(cl[1])+20, int(cl[0])-20:int(cl[0])+20])
         plt.scatter(20, 20, c='white')
-        #plt.savefig('correspondances/corr%d.png' % (a, ))
+        plt.savefig('correspondances/corr%d.png' % (a, ))
         a += 1
         plt.clf()
         plt.close()

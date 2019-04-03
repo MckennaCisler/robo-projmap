@@ -1,9 +1,11 @@
 #version 330 core
 
-in vec3 colorOut; // color from vertex shader
-out vec3 color; // output color
+// Ouput data
+out vec3 color;
 
 void main()
 {
-	color = colorOut;
+
+	// Output color = red 
+	color = vec3(1,0.5,0);
 }
