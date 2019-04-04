@@ -3,9 +3,9 @@ import numpy as np
 
 class Projector():
     def __init__(self, calibration_matrix, *, y_res, x_res):
-        self.calibration_matrix = calibration_matrix
+        self.calibration_matrix = calibration_matrix.astype(np.float32)
         self.inds = np.indices([y_res, x_res], dtype=np.float32).transpose([1, 2, 0])
-        #project.start()
+        project.start(self.calibration_matrix, -1)
 
     def draw_frame(self, rgb, depth):
         depth = np.expand_dims(depth, -1)
@@ -14,10 +14,10 @@ class Projector():
             depth,
             rgb
         ], -1)
-        #project.draw_frame(coords)
+        project.draw_frame(coords.astype(np.float32))
 
     def __del__(self):
-        #project.stop()
+        project.stop()
         pass
 
 

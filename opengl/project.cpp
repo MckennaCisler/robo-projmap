@@ -124,7 +124,7 @@ PyObject *start(PyObject *self, PyObject *args) {
     glBindVertexArray(VertexArrayID);
 
     // Create and compile our GLSL program from the shaders
-    programID = LoadShaders( "shader.vert", "shader.frag" );
+    programID = LoadShaders( "proj_shader.vert", "proj_shader.frag" );
 
     // Get a handle for our "MVP" uniform
     MatrixID = glGetUniformLocation(programID, "MVP");
