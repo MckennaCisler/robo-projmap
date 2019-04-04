@@ -19,15 +19,11 @@ using namespace glm;
  * https://www.opengl-tutorial.org/intermediate-tutorials/tutorial-9-vbo-indexing/
  */
 
-#define MAX_INPUT_RES 1920*1080
-#define XYDC_MAX_SIZE 6*MAX_INPUT_RES
-#define INDICES_MAX_SIZE 3*2*(1920 - 1)*(1080 - 1)
-
-#define DEFAULT_PROJ_WIDTH      1366
-#define DEFAULT_PROJ_HEIGHT     768
-
-#define DEFAULT_INPUT_WIDTH     1920
-#define DEFAULT_INPUT_HEIGHT    1080
+#define MAX_INPUT_WIDTH     1920
+#define MAX_INPUT_HEIGHT    1080
+#define MAX_INPUT_RES       MAX_INPUT_WIDTH*MAX_INPUT_HEIGHT
+#define XYDC_MAX_SIZE       6*MAX_INPUT_RES
+#define INDICES_MAX_SIZE    3*2*(MAX_INPUT_WIDTH - 1)*(MAX_INPUT_HEIGHT - 1)
 
 GLFWwindow* window;
 GLuint VertexArrayID;
@@ -41,24 +37,25 @@ static unsigned int g_indices_data[INDICES_MAX_SIZE];
 void generate_indices(int height, int width, unsigned int indices[]);
 
 /**
- * Takes in (np.ndarray projector matrix, output monitor index).
+ * Takes in (np.ndarray projector matrix, input_width, input_height, proj_width, proj_height, output monitor index).
  * The projector matrix must be 4x4, and output monitor can be negative for windowed mode.
  * Returns True on success, False otherwise
  */
 PyObject *start(PyObject *self, PyObject *args) {
-    int proj_width = DEFAULT_PROJ_WIDTH;
-    int proj_height = DEFAULT_PROJ_HEIGHT;
-    int input_width = DEFAULT_INPUT_WIDTH;
-    int input_height = DEFAULT_INPUT_HEIGHT;
 
     // Extract Python args
 
     // read args
     PyObject *arg_mvp = NULL;
     PyObject *arr_mvp = NULL;
+    int input_width;
+    int input_height;
+    int proj_width;
+    int proj_height;
     int monitor_index;
 
-    if (!PyArg_ParseTuple(args, "Oi", &arg_mvp, &monitor_index)) {
+    if (!PyArg_ParseTuple(args, "Oiiiii", &arg_mvp, 
+        &input_width, &input_height, &proj_width, &proj_height, &monitor_index)) {
         Py_RETURN_NONE;
     }
 
@@ -77,7 +74,8 @@ PyObject *start(PyObject *self, PyObject *args) {
             MVP[i][j] = *(mvp_data + i*4 + j);
         }
     }
-    Py_DECREF(arr_mvp); // decrement reference on numpy array
+    // decrement reference on arguments
+    Py_DECREF(arr_mvp); 
 
     // Initialise GLFW
     if( !glfwInit() ) {
@@ -123,8 +121,8 @@ PyObject *start(PyObject *self, PyObject *args) {
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-    // Dark blue background
-    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+    // Light background
+    glClearColor(0.8f, 0.8f, 0.9f, 0.0f);
 
     // Setup vertex arrays
     glGenVertexArrays(1, &VertexArrayID);
@@ -139,7 +137,7 @@ PyObject *start(PyObject *self, PyObject *args) {
     // Generate a buffer for the vertices (XYD points)
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, XYDC_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, XYDC_MAX_SIZE * sizeof(int), NULL, GL_DYNAMIC_DRAW);
 
     // Populate the indices array
     generate_indices(input_width, input_height, g_indices_data);
@@ -147,7 +145,7 @@ PyObject *start(PyObject *self, PyObject *args) {
     // Generate a buffer for the indices of the triangle points
     glGenBuffers(1, &indexbuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexbuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDICES_MAX_SIZE, g_indices_data, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDICES_MAX_SIZE * sizeof(int), g_indices_data, GL_STATIC_DRAW);
 
     Py_RETURN_TRUE;
 }
@@ -173,6 +171,8 @@ void generate_indices(int height, int width, unsigned int indices[]) {
         }
     }
 }
+
+int check_for_exit();
 
 /**
  * Takes in (np.ndarray xydc).
@@ -201,7 +201,7 @@ PyObject *draw_frame(PyObject *self, PyObject *args) {
 
     // update data in buffers (reallocate the buffer objects beforehand for speed)
     // (see https://www.khronos.org/opengl/wiki/Buffer_Object_Streaming#Buffer_re-specification)
-    // glBufferData(GL_ARRAY_BUFFER, XYDC_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, XYDC_MAX_SIZE * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, xydc_size * sizeof(GLfloat), xydc_data);
 
     // reset color
@@ -247,15 +247,23 @@ PyObject *draw_frame(PyObject *self, PyObject *args) {
     // Swap buffers
     glfwSwapBuffers(window);
 
-    // decrement reference on numpy array
-    Py_DECREF(arr_xydc);
+    // decrement reference on arguments
+    Py_DECREF(arr_xydc); 
 
+    if (check_for_exit()) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
+}
+
+int check_for_exit() {
     // Check for exit keypresses
     glfwPollEvents();
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS && glfwWindowShouldClose(window) == 0) {
-		Py_RETURN_FALSE;
+		return 0;
 	} else {
-		Py_RETURN_TRUE;
+        return 1;
 	}
 }
 
