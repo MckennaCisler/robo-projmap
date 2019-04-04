@@ -5,7 +5,27 @@ import cv2
 
 class Projector():
     def __init__(self, calibration_matrix, *, x_res, y_res, proj_x_res=1366, proj_y_res=768):
-        self.calibration_matrix = calibration_matrix.astype(np.float32)
+        A = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, 1],
+            [0, 0, 1, 0]
+        ], dtype=np.float32)
+        B = np.array([
+            [1 / proj_x_res,    0,              0, 0],
+            [0,                 1 / proj_y_res, 0, 0],
+            [0,                 0,              1, 0],
+            [0,                 0,              0, 0.5]
+        ], dtype=np.float32)
+        C = np.array([
+            [1, 0, 0, -1],
+            [0, 1, 0, -1],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.float32)
+
+        M = np.matmul(np.matmul(C, B), np.matmul(A, calibration_matrix))
+        self.calibration_matrix = M.astype(np.float32)
         self.inds = np.indices([y_res, x_res], dtype=np.float32).transpose([1, 2, 0])[..., ::-1]
         project.start(self.calibration_matrix, x_res, y_res, proj_x_res, proj_y_res, -1)
 
@@ -28,7 +48,7 @@ if __name__ == '__main__':
     # width, height = 1000, 1000
     # width, height = 501, 500
     width, height = 1366, 768
-    
+
     # mvp = np.array([
     #     0.,  -.1, 0., 0.,
     #     .1,  0., 0., 0.,
