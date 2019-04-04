@@ -14,7 +14,7 @@
 using namespace glm;
 
 #define MAX_INPUT_RES 1920*1080
-#define VERTS_MAX_SIZE 6*MAX_INPUT_RES
+#define XYDC_MAX_SIZE 6*MAX_INPUT_RES
 #define INDICES_MAX_SIZE 3*2*MAX_INPUT_RES
 
 #define DEFAULT_PROJ_WIDTH      1366
@@ -33,23 +33,6 @@ GLuint indexbuffer;
 
 
 static const unsigned int g_indices_data[INDICES_MAX_SIZE];
-
-// // left to right
-// static const unsigned int g_indices_data[] = {
-//         3, 0, 4,
-//         0, 1, 2,
-//         1, 5, 6,
-// };
-
-// static const GLfloat g_vertex_buffer_data[] = {
-//         -1.0f, -1.0f, 0.0f,
-//         1.0f, -1.0f, 0.0f,
-//         0.0f,  1.0f, 0.0f,
-//         -3.0f, -1.0f, 0.0f,
-//         -2.0f,  1.0f, 0.0f,
-//         3.0f, -1.0f, 0.0f,
-//         2.0f,  1.0f, 0.0f,
-// };
 
 /**
  * Takes in (int height, int width, np.ndarray projector matrix, output monitor). 
@@ -133,7 +116,7 @@ PyObject *start(PyObject *self, PyObject *args) {
     // Generate a buffer for the vertices (XYD points)
     glGenBuffers(1, &vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, VERTS_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, XYDC_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
 
     // Populate the indices array
     generate_indices(input_width, input_height, g_indices_data);
@@ -151,42 +134,38 @@ void generate_indices(int height, int width, unsigned int indices[]) {
 }
 
 /**
- * Takes in (np.ndarray xyd, color points, np.ndarray triangle indices). 
- * The color and points arrays should have size N*3, while the indices should have size at most N,
- * where N is the width*height of the image.
+ * Takes in (np.ndarray xydc). 
+ * xydc should contain N words of 6 values: (x*d, y*d, d, r, g, b) 
+ * where N is the number of pixels, x, y are the pixel locations.
  * Returns true when the window was closed or None on error.
  */
 PyObject *draw_frame(PyObject *self, PyObject *args) {
     // read args
-    PyObject *arg_xyd_color = NULL, *arg_indices = NULL;
-    PyObject *arr_xyd_color = NULL, *arr_indices = NULL;
+    PyObject *arg_xydc = NULL;
+    PyObject *arr_xydc = NULL;
 
-    if (!PyArg_ParseTuple(args, "OO", &arg_xyd_color, &arg_indices)) {
+    if (!PyArg_ParseTuple(args, "O", &arg_xydc)) {
         Py_RETURN_NONE;
     }
 
-    arr_xyd_color = PyArray_FROM_OTF(arg_xyd_color, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
-    arr_indices =   PyArray_FROM_OTF(arg_indices, NPY_INT32, NPY_ARRAY_IN_ARRAY);
+    arr_xydc = PyArray_FROM_OTF(arg_xydc, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
 
-    int xyd_color_size = PyArray_Size(arr_xyd_color);
-    int indices_size = PyArray_Size(arr_indices);
+    int xydc_size = PyArray_Size(arr_xydc);
 
-    if (xyd_color_size > 6*MAX_INPUT_RES || indices_size > MAX_INPUT_RES) {
+    if (xydc_size > XYDC_MAX_SIZE) {
             fprintf(stderr, "Invalid input sizes to draw_frame\n");
             Py_RETURN_NONE;
     }
 
-    GLfloat *xyd_color_data = (GLfloat*) PyArray_DATA(arr_xyd_color);
+    GLfloat *xydc_data = (GLfloat*) PyArray_DATA(arr_xydc);
     int *indices_data =   (int*) PyArray_DATA(arr_indices);
 
     // update data in buffers (reallocate the buffer objects beforehand for speed)
     // (see https://www.khronos.org/opengl/wiki/Buffer_Object_Streaming#Buffer_re-specification)
-    // glBufferData(GL_ARRAY_BUFFER, VERTS_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, xyd_color_size * sizeof(GLfloat), xyd_color_data);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDICES_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices_size * sizeof(int), indices_data);
+    // glBufferData(GL_ARRAY_BUFFER, XYDC_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, xydc_size * sizeof(GLfloat), xydc_data);
 
-    // reset color?
+    // reset color
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Use our shader (the camera->projector conversion matrix and the color attribute adder)
