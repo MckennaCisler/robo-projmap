@@ -34,7 +34,7 @@ glm::mat4 MVP;
 GLuint indexbuffer;
 static unsigned int g_indices_data[INDICES_MAX_SIZE];
 
-void generate_indices(int height, int width, unsigned int indices[]);
+void generate_indices(int width, int height, unsigned int indices[]);
 
 /**
  * Takes in (np.ndarray projector matrix, input_width, input_height, proj_width, proj_height, output monitor index).
@@ -150,7 +150,7 @@ PyObject *start(PyObject *self, PyObject *args) {
     Py_RETURN_TRUE;
 }
 
-void generate_indices(int height, int width, unsigned int indices[]) {
+void generate_indices(int width, int height, unsigned int indices[]) {
     int i = 0;
 
     for (int y = 0; y < height - 1; y++) {
