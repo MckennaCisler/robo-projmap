@@ -30,16 +30,17 @@ xyd = np.array([
     2,  1, 0,   1, 1, 1
 ], dtype=np.float32)
 
-indices = np.array([
-        3, 0, 4,
-        0, 1, 2,
-        1, 5, 6,
-], dtype=np.int32)
+mvp = np.array([
+        1., -.2, 0., 0.,
+        .2,  1., 0., 0.,
+        0.,  0., 1., 0.,
+        0.,  0., 0., 2.
+], dtype=np.float32)
 
-project.start()
+project.start(mvp, -1)
 fps = FPSRecorder(averaging=0.0)
 while True:
-    if project.draw_frame(xyd, indices):
+    if project.draw_frame(xyd):
         project.stop()
         break
     else:

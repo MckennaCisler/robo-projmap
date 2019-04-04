@@ -13,6 +13,12 @@
 #include <time.h>
 using namespace glm;
 
+/**
+ * Much of this file is adapted from the following tutorials:
+ * http://www.opengl-tutorial.org/intermediate-tutorials/billboards-particles/particles-instancing/
+ * https://www.opengl-tutorial.org/intermediate-tutorials/tutorial-9-vbo-indexing/
+ */
+
 #define MAX_INPUT_RES 1920*1080
 #define XYDC_MAX_SIZE 6*MAX_INPUT_RES
 #define INDICES_MAX_SIZE 3*2*MAX_INPUT_RES
@@ -30,13 +36,13 @@ GLuint programID;
 GLint MatrixID;
 glm::mat4 MVP;
 GLuint indexbuffer;
+static unsigned int g_indices_data[INDICES_MAX_SIZE];
 
-
-static const unsigned int g_indices_data[INDICES_MAX_SIZE];
+void generate_indices(int height, int width, unsigned int indices[]);
 
 /**
- * Takes in (int height, int width, np.ndarray projector matrix, output monitor). 
- * The projector matrix must be 3x3, and output monitor can be negative for windowed mode.
+ * Takes in (np.ndarray projector matrix, output monitor index). 
+ * The projector matrix must be 4x4, and output monitor can be negative for windowed mode.
  * Returns True on success, False otherwise
  */
 PyObject *start(PyObject *self, PyObject *args) {
@@ -45,9 +51,26 @@ PyObject *start(PyObject *self, PyObject *args) {
     int input_width = DEFAULT_INPUT_WIDTH;
     int input_height = DEFAULT_INPUT_HEIGHT;
 
-    // Extract Python args
-    // TODO: matrix
-    int monitor_index = -1;
+    // Extract Python args 
+
+    // read args
+    PyObject *arg_mvp = NULL;
+    PyObject *arr_mvp = NULL;
+    int monitor_index;
+
+    if (!PyArg_ParseTuple(args, "Oi", &arg_mvp, &monitor_index)) {
+        Py_RETURN_NONE;
+    }
+
+    arr_mvp = PyArray_FROM_OTF(arg_mvp, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
+
+    int mvp_size = PyArray_Size(arr_mvp);
+    if (mvp_size != 16) {
+            fprintf(stderr, "Invalid size for MVP matrix\n");
+            Py_RETURN_NONE;
+    }
+
+    float *mvp_data = (float*) PyArray_DATA(arr_mvp);
 
     // Initialise GLFW
     if( !glfwInit() ) {
@@ -106,12 +129,12 @@ PyObject *start(PyObject *self, PyObject *args) {
     // Get a handle for our "MVP" uniform
     MatrixID = glGetUniformLocation(programID, "MVP");
 
-    MVP[1][0] = 0.2f;
-    MVP[0][1] = -0.2f;
-    MVP[0][0] = 1.0f;
-    MVP[1][1] = 1.0f;
-    MVP[2][2] = 1.0f;
-    MVP[3][3] = 4.0f;
+    // Copy input python data in
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            MVP[i][j] = *(mvp_data + i*4 + j);
+        }
+    }
 
     // Generate a buffer for the vertices (XYD points)
     glGenBuffers(1, &vertexbuffer);
@@ -131,6 +154,15 @@ PyObject *start(PyObject *self, PyObject *args) {
 
 void generate_indices(int height, int width, unsigned int indices[]) {
     // TODO
+    indices[0] = 3;
+    indices[1] = 0;
+    indices[2] = 4;
+    indices[3] = 0;
+    indices[4] = 1;
+    indices[5] = 2;
+    indices[6] = 1;
+    indices[7] = 5;
+    indices[8] = 6;
 }
 
 /**
@@ -151,14 +183,12 @@ PyObject *draw_frame(PyObject *self, PyObject *args) {
     arr_xydc = PyArray_FROM_OTF(arg_xydc, NPY_FLOAT32, NPY_ARRAY_IN_ARRAY);
 
     int xydc_size = PyArray_Size(arr_xydc);
-
     if (xydc_size > XYDC_MAX_SIZE) {
             fprintf(stderr, "Invalid input sizes to draw_frame\n");
             Py_RETURN_NONE;
     }
 
     GLfloat *xydc_data = (GLfloat*) PyArray_DATA(arr_xydc);
-    int *indices_data =   (int*) PyArray_DATA(arr_indices);
 
     // update data in buffers (reallocate the buffer objects beforehand for speed)
     // (see https://www.khronos.org/opengl/wiki/Buffer_Object_Streaming#Buffer_re-specification)
