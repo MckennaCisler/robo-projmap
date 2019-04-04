@@ -31,6 +31,9 @@ GLint MatrixID;
 glm::mat4 MVP;
 GLuint indexbuffer;
 
+
+static const unsigned int g_indices_data[INDICES_MAX_SIZE];
+
 // // left to right
 // static const unsigned int g_indices_data[] = {
 //         3, 0, 4,
@@ -133,19 +136,19 @@ PyObject *start(PyObject *self, PyObject *args) {
     glBufferData(GL_ARRAY_BUFFER, VERTS_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
 
     // Populate the indices array
-    generate_indices();
+    generate_indices(input_width, input_height, g_indices_data);
 
     // Generate a buffer for the indices of the triangle points
     glGenBuffers(1, &indexbuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexbuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDICES_MAX_SIZE, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDICES_MAX_SIZE, g_indices_data, GL_STATIC_DRAW);
 
     Py_RETURN_TRUE;
 }
 
-// void generate_indices(int height, int width, ) {
-
-// }
+void generate_indices(int height, int width, unsigned int indices[]) {
+    // TODO
+}
 
 /**
  * Takes in (np.ndarray xyd, color points, np.ndarray triangle indices). 
