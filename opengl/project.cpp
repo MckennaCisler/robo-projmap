@@ -70,7 +70,14 @@ PyObject *start(PyObject *self, PyObject *args) {
             Py_RETURN_NONE;
     }
 
+    // Copy input python data into our matrix object
     float *mvp_data = (float*) PyArray_DATA(arr_mvp);
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            MVP[i][j] = *(mvp_data + i*4 + j);
+        }
+    }
+    Py_DECREF(arr_mvp); // decrement reference on numpy array
 
     // Initialise GLFW
     if( !glfwInit() ) {
@@ -128,13 +135,6 @@ PyObject *start(PyObject *self, PyObject *args) {
 
     // Get a handle for our "MVP" uniform
     MatrixID = glGetUniformLocation(programID, "MVP");
-
-    // Copy input python data in
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            MVP[i][j] = *(mvp_data + i*4 + j);
-        }
-    }
 
     // Generate a buffer for the vertices (XYD points)
     glGenBuffers(1, &vertexbuffer);
@@ -246,6 +246,9 @@ PyObject *draw_frame(PyObject *self, PyObject *args) {
 
     // Swap buffers
     glfwSwapBuffers(window);
+
+    // decrement reference on numpy array
+    Py_DECREF(arr_xydc);
 
     // Check for exit keypresses
     glfwPollEvents();
