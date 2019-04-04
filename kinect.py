@@ -4,16 +4,16 @@ import time
 import atexit
 import numpy as np
 
+# try:
+#     from pylibfreenect2 import OpenGLPacketPipeline
+#     pipeline = OpenGLPacketPipeline()
+# except:
 try:
-    from pylibfreenect2 import OpenGLPacketPipeline
-    pipeline = OpenGLPacketPipeline()
+    from pylibfreenect2 import OpenCLPacketPipeline
+    pipeline = OpenCLPacketPipeline()
 except:
-    try:
-        from pylibfreenect2 import OpenCLPacketPipeline
-        pipeline = OpenCLPacketPipeline()
-    except:
-        from pylibfreenect2 import CpuPacketPipeline
-        pipeline = CpuPacketPipeline()
+    from pylibfreenect2 import CpuPacketPipeline
+    pipeline = CpuPacketPipeline()
 print("Kinect packet pipeline:", type(pipeline).__name__)
 
 class Kinect:
