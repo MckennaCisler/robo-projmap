@@ -21,7 +21,7 @@ using namespace glm;
 
 #define MAX_INPUT_RES 1920*1080
 #define XYDC_MAX_SIZE 6*MAX_INPUT_RES
-#define INDICES_MAX_SIZE 3*2*MAX_INPUT_RES
+#define INDICES_MAX_SIZE 3*2*(1920 - 1)*(1080 - 1)
 
 #define DEFAULT_PROJ_WIDTH      1366
 #define DEFAULT_PROJ_HEIGHT     768
@@ -41,7 +41,7 @@ static unsigned int g_indices_data[INDICES_MAX_SIZE];
 void generate_indices(int height, int width, unsigned int indices[]);
 
 /**
- * Takes in (np.ndarray projector matrix, output monitor index). 
+ * Takes in (np.ndarray projector matrix, output monitor index).
  * The projector matrix must be 4x4, and output monitor can be negative for windowed mode.
  * Returns True on success, False otherwise
  */
@@ -51,7 +51,7 @@ PyObject *start(PyObject *self, PyObject *args) {
     int input_width = DEFAULT_INPUT_WIDTH;
     int input_height = DEFAULT_INPUT_HEIGHT;
 
-    // Extract Python args 
+    // Extract Python args
 
     // read args
     PyObject *arg_mvp = NULL;
@@ -153,21 +153,30 @@ PyObject *start(PyObject *self, PyObject *args) {
 }
 
 void generate_indices(int height, int width, unsigned int indices[]) {
-    // TODO
-    indices[0] = 3;
-    indices[1] = 0;
-    indices[2] = 4;
-    indices[3] = 0;
-    indices[4] = 1;
-    indices[5] = 2;
-    indices[6] = 1;
-    indices[7] = 5;
-    indices[8] = 6;
+    int i = 0;
+
+    for (int y = 0; y < height - 1; y++) {
+        for (int x = 0; x < width - 1; x++) {
+            int ind = y * width + x;
+            int ind_r = ind + 1;
+            int ind_d = ind + width;
+            int ind_dr = ind + 1 + width;
+
+            indices[i + 0] = ind;
+            indices[i + 1] = ind_r;
+            indices[i + 2] = ind_d;
+            indices[i + 3] = ind_dr;
+            indices[i + 4] = ind_d;
+            indices[i + 5] = ind_r;
+
+            i += 6;
+        }
+    }
 }
 
 /**
- * Takes in (np.ndarray xydc). 
- * xydc should contain N words of 6 values: (x*d, y*d, d, r, g, b) 
+ * Takes in (np.ndarray xydc).
+ * xydc should contain N words of 6 values: (x*d, y*d, d, r, g, b)
  * where N is the number of pixels, x, y are the pixel locations.
  * Returns true when the window was closed or None on error.
  */
