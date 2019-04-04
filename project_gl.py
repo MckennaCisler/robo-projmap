@@ -25,6 +25,7 @@ class Projector():
         ], dtype=np.float32)
 
         M = np.matmul(np.matmul(C, B), np.matmul(A, calibration_matrix))
+        print(M)
         self.calibration_matrix = M.astype(np.float32)
         self.inds = np.indices([y_res, x_res], dtype=np.float32).transpose([1, 2, 0])[..., ::-1]
         project.start(self.calibration_matrix, x_res, y_res, proj_x_res, proj_y_res, -1)

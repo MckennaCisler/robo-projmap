@@ -71,7 +71,7 @@ PyObject *start(PyObject *self, PyObject *args) {
     float *mvp_data = (float*) PyArray_DATA(arr_mvp);
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
-            MVP[i][j] = *(mvp_data + i*4 + j);
+            MVP[j][i] = *(mvp_data + i*4 + j);
         }
     }
     // decrement reference on arguments
