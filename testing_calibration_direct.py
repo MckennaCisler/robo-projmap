@@ -14,7 +14,7 @@ w = Fullscreen_Window()
 w.clear()
 w.update()
 
-M = pickle.load(open('correspondances/one_matrix.pickle', 'rb'))
+M = pickle.load(open('direct_model/correspondances/one_matrix.pickle', 'rb'))
 # M = np.array([
 #     [1, 0, 0, 0],
 #     [0, 1, 0, 0],

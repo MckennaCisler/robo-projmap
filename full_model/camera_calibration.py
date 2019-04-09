@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+import sys
+sys.path.append("..")
 import numpy as np
 import cv2
 from kinect import *
-import sys
 from os.path import join
 import matplotlib.pyplot as plt
 import calibration
