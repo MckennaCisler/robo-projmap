@@ -4,7 +4,7 @@ import time
 import cv2
 
 class Projector():
-    def __init__(self, calibration_matrix, *, x_res, y_res, proj_x_res=1366, proj_y_res=768):
+    def __init__(self, calibration_matrix, *, x_res, y_res, proj_x_res=1366, proj_y_res=768, enitire=False):
         A = np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0],
@@ -18,13 +18,16 @@ class Projector():
             [0,                 0,              0, 0.5]
         ], dtype=np.float32)
         C = np.array([
-            [1, 0, 0, -1],
-            [0, 1, 0, -1],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
+            [1,  0,  0, -1],
+            [0,  1,  0,  1],
+            [0,  0,  1,  0],
+            [0,  0,  0,  1]
         ], dtype=np.float32)
 
         M = np.matmul(np.matmul(C, B), np.matmul(A, calibration_matrix))
+        if entire:
+            M = calibration_matrix
+        print(np.matmul(np.matmul(C, B), A))
         print(M)
         self.calibration_matrix = M.astype(np.float32)
         self.inds = np.indices([y_res, x_res], dtype=np.float32).transpose([1, 2, 0])[..., ::-1]
@@ -37,7 +40,7 @@ class Projector():
             depth,
             rgb/255.0
         ], -1)
-        project.draw_frame(coords.astype(np.float32))
+        return project.draw_frame(coords.astype(np.float32))
 
     def __del__(self):
         project.stop()
@@ -64,7 +67,7 @@ if __name__ == '__main__':
     ], dtype=np.float32)
     # mvp = np.ascontiguousarray(mvp.T)
 
-    p = Projector(mvp, x_res=width, y_res=height, proj_x_res=1366, proj_y_res=768)
+    p = Projector(mvp, x_res=width, y_res=height, proj_x_res=1366, proj_y_res=768, entire=True)
 
     # rgb = 255*np.random.rand(height, width, 3)
     # rgb = 255*np.ones([height, width, 3], dtype=np.float32)

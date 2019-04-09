@@ -23,16 +23,16 @@ M = np.concatenate([
 
 p = Projector(M, x_res=width, y_res=height, proj_x_res=1366, proj_y_res=768)
 
-
-from kinect import Kinect
-k = Kinect()
-k.start()
+# from kinect import Kinect
+# k = Kinect()
+# k.start()
 
 depth = 1000*np.ones([height, width], dtype=np.float32)
-for i in range(500):
+while True:
     # rgb = 255*np.random.rand(height, width, 3)
-    rgb = k.get_current_color_frame()
+    rgb = np.random.randint(0, 255, size=[height, width, 3])
     # rgb, depth = k.get_current_rgbd_frame()
-    p.draw_frame(rgb[..., :3], depth)
+    if p.draw_frame(rgb[..., :3], depth):
+        p.stop()
 
-k.stop()
+# k.stop()
