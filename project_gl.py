@@ -2,9 +2,10 @@ import project
 import numpy as np
 import time
 import cv2
+import matplotlib.pyplot as plt
 
 class Projector():
-    def __init__(self, calibration_matrix, *, x_res, y_res, proj_x_res=1366, proj_y_res=768, enitire=False):
+    def __init__(self, calibration_matrix, *, x_res, y_res, proj_x_res=1366, proj_y_res=768, entire=False):
         A = np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0],
@@ -19,7 +20,7 @@ class Projector():
         ], dtype=np.float32)
         C = np.array([
             [1,  0,  0, -1],
-            [0,  1,  0,  1],
+            [0,  -1,  0,  1],
             [0,  0,  1,  0],
             [0,  0,  0,  1]
         ], dtype=np.float32)
@@ -27,9 +28,9 @@ class Projector():
         M = np.matmul(np.matmul(C, B), np.matmul(A, calibration_matrix))
         if entire:
             M = calibration_matrix
-        print(np.matmul(np.matmul(C, B), A))
-        print(M)
-        self.calibration_matrix = M.astype(np.float32)
+
+        M /= M[3, 3]
+        self.calibration_matrix = np.ascontiguousarray(M.astype(np.float32))
         self.inds = np.indices([y_res, x_res], dtype=np.float32).transpose([1, 2, 0])[..., ::-1]
         project.start(self.calibration_matrix, x_res, y_res, proj_x_res, proj_y_res, -1)
 
@@ -38,8 +39,23 @@ class Projector():
         coords = np.concatenate([
             self.inds * depth,
             depth,
-            rgb/255.0
+            rgb / 255.0
         ], -1)
+
+        coords_np = np.concatenate([
+            self.inds * depth,
+            depth,
+            np.ones(depth.shape)
+            ], -1)
+
+        # goto = np.matmul(coords_np, self.calibration_matrix.T)
+        # crds = goto[..., :3] / goto[..., 3:4]
+        # valid = np.all(np.logical_and(crds > -1, crds < 1), -1)
+        # print(crds)
+        # plt.imshow(valid)
+        # plt.show()
+        # print()
+
         return project.draw_frame(coords.astype(np.float32))
 
     def __del__(self):
@@ -60,10 +76,10 @@ if __name__ == '__main__':
     #     0.,  0., 0., .1
     # ], dtype=np.float32)
     mvp = np.array([
-        1/1366.,  0,    0,  0,
-        0,  -1/768.,    0,  0,
-        0,  0,          0,  0,
-        -0.5, 0.5,      0,  0.5
+        [1/1366.,  0,    0,  -0.5],
+        [0,  -1/768.,    0,  0.5],
+        [0,  0,          0,  0],
+        [0.0, 0.0,      0,  0.5]
     ], dtype=np.float32)
     # mvp = np.ascontiguousarray(mvp.T)
 
@@ -82,5 +98,6 @@ if __name__ == '__main__':
 
     for i in range(500):
         start = time.time()
-        p.draw_frame(rgb, depth)
+        if p.draw_frame(rgb, depth):
+            break
         time.sleep(max(0, 1. / fps - (time.time() - start)))

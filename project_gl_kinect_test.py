@@ -8,18 +8,27 @@ from project_gl import Projector
 # width, height = 501, 500
 width, height = 1920, 1080
 
-mvp = np.array([
-    1/1366.,  0,    0,  0,
-    0,  -1/768.,    0,  0,
-    0,  0,          0,  0,
-    -0.5, 0.5,      0,  0.5
-], dtype=np.float32)
+# mvp = np.array([
+#     1/1366.,  0,    0,  0,
+#     0,  -1/768.,    0,  0,
+#     0,  0,          0,  0,
+#     -0.5, 0.5,      0,  0.5
+# ], dtype=np.float32)
 
 M = pickle.load(open('direct_model/correspondances/one_matrix.pickle', 'rb'))
 M = np.concatenate([
     M,
-    [[0, 0, 0, 1]]
+    [[0, 0, 0, 0]]
 ], 0)
+
+# print(M / M[2, 3])
+
+# M = np.array([
+#     [1, 0, 0, 0],
+#     [0, 1, 0, 0],
+#     [0, 0, 0, 1],
+#     [0, 0, 0, 0],
+# ])
 
 p = Projector(M, x_res=width, y_res=height, proj_x_res=1366, proj_y_res=768)
 
@@ -27,7 +36,7 @@ p = Projector(M, x_res=width, y_res=height, proj_x_res=1366, proj_y_res=768)
 # k = Kinect()
 # k.start()
 
-depth = 1000*np.ones([height, width], dtype=np.float32)
+depth = 1000 * np.ones([height, width], dtype=np.float32)
 while True:
     # rgb = 255*np.random.rand(height, width, 3)
     rgb = np.random.randint(0, 255, size=[height, width, 3])
