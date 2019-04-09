@@ -1,4 +1,6 @@
-from project import Fullscreen_Window
+import sys
+sys.path.append("..")
+from project_tk import Fullscreen_Window
 from time import sleep
 from kinect import Kinect
 import matplotlib.pyplot as plt

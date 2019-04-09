@@ -1,8 +1,10 @@
+import sys
+sys.path.append("..")
 import json
 import numpy as np
 from kinect import Kinect
 from camera import Camera
-from project import Fullscreen_Window
+from project_tk import Fullscreen_Window
 import time
 import cv2
 import matplotlib.pyplot as plt

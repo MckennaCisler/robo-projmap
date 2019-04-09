@@ -1,10 +1,11 @@
+import sys
+sys.path.append("..")
 import numpy as np
 import matplotlib.pyplot as plt
-from project import Fullscreen_Window
+from project_tk import Fullscreen_Window
 from kinect import *
 from time import sleep
 import cv2
-import sys
 from os.path import join
 import os
 

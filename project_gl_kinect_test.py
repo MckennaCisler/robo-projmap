@@ -15,7 +15,7 @@ mvp = np.array([
     -0.5, 0.5,      0,  0.5
 ], dtype=np.float32)
 
-M = pickle.load(open('correspondances/one_matrix.pickle', 'rb'))
+M = pickle.load(open('direct_model/correspondances/one_matrix.pickle', 'rb'))
 M = np.concatenate([
     M,
     [[0, 0, 0, 1]]
