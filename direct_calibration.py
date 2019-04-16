@@ -35,11 +35,12 @@ def get_me_some_correspondances(kinect, project, x_res=1366, y_res=768, padding=
     amaxs = np.argmax(np.reshape(high_contrast_image, [-1, 3]), 0)
     cam_locs = np.stack(np.unravel_index(amaxs, high_contrast_image.shape[:2]), -1)
 
+    print(cam_locs)
     cam_locs = np.concatenate([
-        cam_locs,
+        cam_locs[..., ::-1],
         depth[
-            cam_locs[:, 1],
-            cam_locs[:, 0]].reshape(-1, 1)
+            cam_locs[:, 0],
+            cam_locs[:, 1]].reshape(-1, 1)
         ], -1)
 
     valid = np.logical_and(cam_locs[:, -1] > 200, cam_locs[:, -1] < 4000)
