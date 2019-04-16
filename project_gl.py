@@ -30,11 +30,13 @@ class Projector():
             M = calibration_matrix
 
         M /= M[3, 3]
+        print(M)
         self.calibration_matrix = np.ascontiguousarray(M.astype(np.float32))
         self.inds = np.indices([y_res, x_res], dtype=np.float32).transpose([1, 2, 0])[..., ::-1]
         project.start(self.calibration_matrix, x_res, y_res, proj_x_res, proj_y_res, -1)
 
     def draw_frame(self, rgb, depth):
+        t1 = time.time()
         depth = np.expand_dims(depth, -1)
         coords = np.concatenate([
             self.inds * depth,
@@ -42,21 +44,14 @@ class Projector():
             rgb / 255.0
         ], -1)
 
-        coords_np = np.concatenate([
-            self.inds * depth,
-            depth,
-            np.ones(depth.shape)
-            ], -1)
+        t2 = time.time()
 
-        # goto = np.matmul(coords_np, self.calibration_matrix.T)
-        # crds = goto[..., :3] / goto[..., 3:4]
-        # valid = np.all(np.logical_and(crds > -1, crds < 1), -1)
-        # print(crds)
-        # plt.imshow(valid)
-        # plt.show()
-        # print()
+        df =  project.draw_frame(coords.astype(np.float32))
+        t3 = time.time()
 
-        return project.draw_frame(coords.astype(np.float32))
+        print(t2 - t1, t3 - t2)
+        return df
+
 
     def __del__(self):
         project.stop()

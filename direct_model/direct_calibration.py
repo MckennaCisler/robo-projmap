@@ -8,69 +8,43 @@ from scipy.ndimage import gaussian_filter
 import numpy as np
 import pickle
 
-def get_me_some_correspondances(kinect, project):
+def get_me_some_correspondances(kinect, project, x_res=1366, y_res=768, padding=20, gauss_filter_width=8.5):
     w.clear()
     sleep(0.25)
     base_im = kinect.get_current_color_frame()
 
-    locs = [
-        (np.random.rand() * 1326 + 20, np.random.rand() * 728 + 20),
-        (np.random.rand() * 1326 + 20, np.random.rand() * 728 + 20),
-        (np.random.rand() * 1326 + 20, np.random.rand() * 728 + 20),
-    ]
-
-    l = np.array(locs)
-    diffs = np.expand_dims(l, 0) - np.expand_dims(l, 1)
+    proj_locs = (np.random.rand(3, 2) * [[x_res - padding * 2, y_res - padding * 2]]) + padding
+    diffs = np.expand_dims(proj_locs, 0) - np.expand_dims(proj_locs, 1)
     dd = np.sum(diffs**2, -1)
 
     while np.min(dd[dd != 0]) < 10000:
-        locs = [
-            (np.random.rand() * 1326 + 20, np.random.rand() * 728 + 20),
-            (np.random.rand() * 1326 + 20, np.random.rand() * 728 + 20),
-            (np.random.rand() * 1326 + 20, np.random.rand() * 728 + 20),
-        ]
-
-        l = np.array(locs)
-        diffs = np.expand_dims(l, 0) - np.expand_dims(l, 1)
+        proj_locs = (np.random.rand(3, 2) * [[x_res - padding * 2, y_res - padding * 2]]) + padding
+        diffs = np.expand_dims(proj_locs, 0) - np.expand_dims(proj_locs, 1)
         dd = np.sum(diffs**2, -1)
 
-    w.draw_point(locs[0][0], locs[0][1], s=20, c='red')
-    w.draw_point(locs[1][0], locs[1][1], s=20, c='green')
-    w.draw_point(locs[2][0], locs[2][1], s=20, c='blue')
+    for proj_loc, color in zip(proj_locs, ['red', 'green', 'blue']):
+        w.draw_point(proj_loc[0], proj_loc[1], s=20, c=color)
 
     sleep(0.25)
     color_im, depth = kinect.get_current_rgbd_frame()
 
-    imd = color_im / 255.0 - base_im / 255.0
-    imd = imd[..., :3]
-    imb = gaussian_filter(imd, [8.5, 8.5, 0])
+    delta_image = color_im[..., :3] / 255.0 - base_im[..., :3] / 255.0
+    delta_image_blur = gaussian_filter(delta_image, [gauss_filter_width, gauss_filter_width, 0])
 
-    m = np.argmax(imb[..., 0] * 2 - imb[..., 1] - imb[..., 2])
-    y, x = np.unravel_index(m, imb[..., 0].shape)
-    l1 = (x, y)
+    high_contrast_image = np.dot(delta_image_blur, np.eye(3) - 1)
+    amaxs = np.argmax(np.reshape(high_contrast_image, [-1, 3]), 0)
+    cam_locs = np.stack(np.unravel_index(amaxs, high_contrast_image.shape[:2]), -1)
 
-    m = np.argmax(imb[..., 1] * 2 - imb[..., 0] - imb[..., 2])
-    y, x = np.unravel_index(m, imb[..., 0].shape)
-    l2 = (x, y)
+    cam_locs = np.concatenate([
+        cam_locs,
+        depth[
+            cam_locs[:, 1],
+            cam_locs[:, 0]].reshape(-1, 1)
+        ], -1)
 
-    m = np.argmax(imb[..., 2] * 2 - imb[..., 1] - imb[..., 0])
-    y, x = np.unravel_index(m, imb[..., 0].shape)
-    l3 = (x, y)
+    valid = np.logical_and(cam_locs[:, -1] > 200, cam_locs[:, -1] < 4000)
 
-    cam_locs = np.array([l1, l2, l3])
-    proj_locs = np.array(locs)
-
-    depths = [depth[cloc[1], cloc[0]] for cloc in cam_locs]
-    cam_locs = np.concatenate(
-        [cam_locs, np.array(depths).reshape(-1, 1)], -1
-    )
-    print(cam_locs)
-
-    valid = np.logical_and(
-        cam_locs[:, -1] > 200,
-        cam_locs[:, -1] < 3000)
-
-    return imd, cam_locs[valid], proj_locs[valid]
+    return delta_image, cam_locs[valid], proj_locs[valid]
 
 w = Fullscreen_Window()
 w.clear()
