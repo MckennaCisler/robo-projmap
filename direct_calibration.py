@@ -31,7 +31,7 @@ def get_me_some_correspondances(kinect, project, x_res=1366, y_res=768, padding=
     delta_image = color_im[..., :3] / 255.0 - base_im[..., :3] / 255.0
     delta_image_blur = gaussian_filter(delta_image, [gauss_filter_width, gauss_filter_width, 0])
 
-    high_contrast_image = np.dot(delta_image_blur, np.eye(3) - 1)
+    high_contrast_image = np.dot(delta_image_blur, np.eye(3) * 3 - 1)
     amaxs = np.argmax(np.reshape(high_contrast_image, [-1, 3]), 0)
     cam_locs = np.stack(np.unravel_index(amaxs, high_contrast_image.shape[:2]), -1)
 
@@ -63,6 +63,9 @@ for i in range(20):
     all_proj_locs.append(proj_locs)
 
     print(cam_locs)
+
+    plt.imshow(im)
+    plt.show()
 
     for cl in cam_locs:
         plt.imshow(im[int(cl[1])-20:int(cl[1])+20, int(cl[0])-20:int(cl[0])+20])
